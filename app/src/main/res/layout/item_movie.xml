@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="#1F1F1F"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="100dp"
+            android:layout_height="140dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:id="@+id/iv_poster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                tools:src="@tools:sample/backgrounds/scenic"/>
+        </androidx.cardview.widget.CardView>
+
+        <!-- 
+            PERBAIKAN UTAMA DAN FINAL:
+            Mengubah tinggi RelativeLayout dari 'match_parent' menjadi '140dp'.
+            Ini adalah akar masalah yang membuat item list tidak tampil benar.
+        -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="140dp" 
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"
+                tools:text="Movie Title That Is Very Long" />
+
+            <TextView
+                android:id="@+id/tv_genre"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_title"
+                android:layout_marginTop="4dp"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp"
+                tools:text="Action, Adventure" />
+
+            <TextView
+                android:id="@+id/tv_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_genre"
+                android:layout_marginTop="8dp"
+                android:textColor="#FBC02D"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                tools:text="⭐ 9.2"/>
+
+            <TextView
+                android:id="@+id/btn_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true" 
+                android:background="@drawable/bg_button_yellow"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="8dp"
+                android:textColor="#121212"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Rp 50.000"/>
+
+        </RelativeLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

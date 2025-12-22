@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "480039047684",
+    "firebase_url": "https://bioskop-ku-default-rtdb.firebaseio.com",
+    "project_id": "bioskop-ku",
+    "storage_bucket": "bioskop-ku.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480039047684:android:1fa9b65ead3c6cc3dd5b51",
+        "android_client_info": {
+          "package_name": "com.aplikasi.bioskopku"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480039047684-26thnomtvaj7ohq00kcaebf1goa04co9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aplikasi.bioskopku",
+            "certificate_hash": "d310cb2a8d218315d2340ed58bdd388a6f9d148b"
+          }
+        },
+        {
+          "client_id": "480039047684-kebtv1bn370vllu4bsohpr7a2j66seca.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1qfMeRr9q2Sa_sB6jiLhY5dtO4pEWpd4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480039047684-kebtv1bn370vllu4bsohpr7a2j66seca.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

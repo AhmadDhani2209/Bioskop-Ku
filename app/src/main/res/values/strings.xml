@@ -1,0 +1,39 @@
+<resources>
+    <string name="app_name">Bioskop Ku</string>
+
+    <string name="title_pilih_kursi">Pilih Kursi</string>
+    <string name="label_layar">Layar Bioskop</string>
+    <string name="legend_tersedia">Tersedia</string>
+    <string name="legend_dipilih">Dipilih</string>
+    <string name="legend_booked">Sudah Dipesan</string>
+    <string name="btn_beli_tiket">BELI TIKET</string>
+    <string name="total_price_placeholder">Total: Rp 0</string>
+
+    <string name="seat_a1">A1</string>
+    <string name="seat_a2">A2</string>
+    <string name="seat_a3">A3</string>
+    <string name="seat_a4">A4</string>
+    <string name="seat_a5">A5</string>
+    <string name="seat_a6">A6</string>
+
+    <string name="seat_b1">B1</string>
+    <string name="seat_b2">B2</string>
+    <string name="seat_b3">B3</string>
+    <string name="seat_b4">B4</string>
+    <string name="seat_b5">B5</string>
+    <string name="seat_b6">B6</string>
+
+    <string name="seat_c1">C1</string>
+    <string name="seat_c2">C2</string>
+    <string name="seat_c3">C3</string>
+    <string name="seat_c4">C4</string>
+    <string name="seat_c5">C5</string>
+    <string name="seat_c6">C6</string>
+
+    <string name="seat_d1">D1</string>
+    <string name="seat_d2">D2</string>
+    <string name="seat_d3">D3</string>
+    <string name="seat_d4">D4</string>
+    <string name="seat_d5">D5</string>
+    <string name="seat_d6">D6</string>
+</resources>
