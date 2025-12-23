@@ -10,12 +10,12 @@
         android:title="Logout" />
 
     <item
-        android:id="@+id/nav_admin_logout"
-        android:icon="@android:drawable/ic_menu_revert"
+        android:id="@+id/nav_admin_tambah"
+        android:icon="@drawable/add"
         android:title="Tambah Film" />
 
     <item
-        android:id="@+id/nav_admin_logout"
-        android:icon="@android:drawable/ic_menu_revert"
+        android:id="@+id/nav_admin_hapus"
+        android:icon="@drawable/icons8_delete"
         android:title="Hapus Film" />
 </menu>
