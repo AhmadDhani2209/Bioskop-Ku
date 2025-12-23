@@ -8,4 +8,14 @@
         android:id="@+id/nav_admin_logout"
         android:icon="@android:drawable/ic_menu_revert" 
         android:title="Logout" />
+
+    <item
+        android:id="@+id/nav_admin_logout"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Tambah Film" />
+
+    <item
+        android:id="@+id/nav_admin_logout"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Hapus Film" />
 </menu>
