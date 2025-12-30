@@ -123,16 +123,11 @@ public class HistoryActivity extends AppCompatActivity implements TicketAdapter.
                         if (ticket != null) {
                             ticket.setTicketId(data.getKey());
                             
-                            // LOGIKA HISTORY:
-                            // Tampilkan jika jam tayang SUDAH LEWAT
                             long showTime = ticket.getShowTimestamp();
                             
-                            // Jika showTime valid dan SUDAH LEWAT (lebih kecil dari sekarang)
-                            // Atau jika tidak valid, masuk history juga
                             if (showTime != -1 && showTime < currentTime) {
                                 historyList.add(ticket);
                             } 
-                            // Untuk amannya, tiket tanpa jam juga dimasukkan ke history (sudah usang)
                             else if (showTime == -1) {
                                 historyList.add(ticket);
                             }
@@ -163,7 +158,13 @@ public class HistoryActivity extends AppCompatActivity implements TicketAdapter.
 
     @Override
     public void onTicketClick(Ticket ticket) {
-        showTicketDetailDialog(ticket);
+        // PERBAIKAN: Gunakan TicketDetailActivity seperti di Tiket Saya
+        Intent intent = new Intent(this, TicketDetailActivity.class);
+        intent.putExtra("ticket_data", ticket);
+        if (ticket.getTicketId() != null) {
+            intent.putExtra("ticket_key", ticket.getTicketId());
+        }
+        startActivity(intent);
     }
 
     @Override
@@ -180,45 +181,6 @@ public class HistoryActivity extends AppCompatActivity implements TicketAdapter.
                         .addOnFailureListener(e -> Toast.makeText(HistoryActivity.this, "Gagal menghapus", Toast.LENGTH_SHORT).show()))
                 .setNegativeButton("Batal", null)
                 .show();
-    }
-
-    private void showTicketDetailDialog(Ticket ticket) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_ticket_detail, null);
-
-        TextView tvHeader = view.findViewById(R.id.dialog_header);
-        TextView tvTitle = view.findViewById(R.id.dialog_movie_title);
-        TextView tvShowtime = view.findViewById(R.id.dialog_showtime);
-        TextView tvSeats = view.findViewById(R.id.dialog_seats);
-        ImageView ivQr = view.findViewById(R.id.iv_qr_code);
-        ImageView ivPoster = view.findViewById(R.id.iv_movie_poster); // Pastikan ID ini ada di layout dialog
-        Button btnClose = view.findViewById(R.id.btn_close_dialog);
-
-        tvHeader.setText("Riwayat Tiket");
-        tvTitle.setText(ticket.getMovieTitle());
-        
-        String showTime = ticket.getShowTime();
-        tvShowtime.setText(showTime != null ? "Jadwal: " + showTime : "Jadwal: -");
-        
-        String seats = ticket.getSeats() != null ? ticket.getSeats().toString().replace("[","").replace("]","") : "-";
-        tvSeats.setText("Kursi: " + seats);
-
-        // Load poster logic here for the dialog, similar to Adapter
-        String posterUrl = ticket.getMoviePoster();
-        if (posterUrl != null && ivPoster != null) {
-            if (posterUrl.startsWith("gs://")) {
-                StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(posterUrl);
-                Glide.with(this).load(storageReference).placeholder(R.drawable.ic_image_broken).into(ivPoster);
-            } else {
-                Glide.with(this).load(posterUrl).placeholder(R.drawable.ic_image_broken).into(ivPoster);
-            }
-        }
-        
-        ivQr.setAlpha(0.5f);
-
-        AlertDialog dialog = builder.setView(view).create();
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
     }
     
     @Override

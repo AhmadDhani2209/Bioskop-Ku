@@ -47,6 +47,9 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.firebaseui:firebase-ui-storage:8.0.2")
 
+    // QR Code Generator
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)

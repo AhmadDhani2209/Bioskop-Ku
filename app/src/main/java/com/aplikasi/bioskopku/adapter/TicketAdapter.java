@@ -1,6 +1,7 @@
 package com.aplikasi.bioskopku.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.aplikasi.bioskopku.R;
+import com.aplikasi.bioskopku.activity.TicketDetailActivity;
 import com.aplikasi.bioskopku.model.Ticket;
 import com.bumptech.glide.Glide;
 import com.google.firebase.storage.FirebaseStorage;
@@ -70,14 +72,12 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
         holder.tvShowTime.setText(showTime != null ? "Jadwal: " + showTime : "Jadwal: -");
         holder.tvShowTime.setVisibility(showTime != null ? View.VISIBLE : View.GONE);
         
-        // PERBAIKAN: Menampilkan Tanggal Tayang
         long timestamp = ticket.getShowTimestamp();
         if (timestamp != -1) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd MMMM yyyy", new Locale("id", "ID"));
             holder.tvDate.setText(dateFormat.format(new Date(timestamp)));
             holder.tvDate.setVisibility(View.VISIBLE);
         } else {
-            // Jika tidak ada timestamp (jam tidak valid), coba tampilkan tanggal pembelian
             if (ticket.purchaseDate > 0) {
                  SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy (Pembelian)", new Locale("id", "ID"));
                  holder.tvDate.setText(dateFormat.format(new Date(ticket.purchaseDate)));
@@ -113,7 +113,16 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
             holder.tvCancel.setOnClickListener(v -> actionListener.onCancelTicket(ticket.getTicketId()));
         }
         
-        holder.itemView.setOnClickListener(v -> actionListener.onTicketClick(ticket));
+        // PERBAIKAN: Mengarahkan klik item ke TicketDetailActivity
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, TicketDetailActivity.class);
+            intent.putExtra("ticket_data", ticket);
+            // Jika ticket ID tersimpan di model, ambil dari situ
+            if (ticket.getTicketId() != null) {
+                intent.putExtra("ticket_key", ticket.getTicketId());
+            }
+            context.startActivity(intent);
+        });
     }
 
     @Override
@@ -129,7 +138,7 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_movie_title_ticket);
             tvShowTime = itemView.findViewById(R.id.tv_showtime_ticket);
-            tvDate = itemView.findViewById(R.id.tv_date_ticket); // Pastikan ID ini ada di layout
+            tvDate = itemView.findViewById(R.id.tv_date_ticket); 
             tvSeats = itemView.findViewById(R.id.tv_seats_ticket);
             tvTotalPrice = itemView.findViewById(R.id.tv_price_ticket);
             ivPoster = itemView.findViewById(R.id.iv_poster_ticket);
