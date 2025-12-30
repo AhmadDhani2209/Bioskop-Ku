@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BioskopKu">
 
-        <!-- ACTIVITY BARU UNTUK ADMIN -->
+        <!-- Activity Admin -->
         <activity
             android:name=".activity.AdminHomeActivity"
             android:exported="false" />
@@ -25,26 +25,35 @@
             android:name=".activity.AdminDeleteMovieActivity"
             android:exported="false" />
 
+        <!-- Activity User -->
         <activity
             android:name=".activity.HistoryActivity"
             android:exported="false" />
         <activity
             android:name=".activity.TicketActivity"
             android:exported="false" />
+        
+        <!-- PENTING: Activity Detail Tiket (QR Code) ditambahkan -->
+        <activity
+            android:name=".activity.TicketDetailActivity"
+            android:exported="false" />
+            
         <activity
             android:name=".activity.MovieDetailActivity"
             android:exported="false" />
         <activity
             android:name=".activity.ProfileActivity"
             android:exported="false" />
+        
         <activity
             android:name=".activity.LoginActivity"
-            android:exported="true"> <!-- Jadikan LAUNCHER -->
+            android:exported="true"> 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
         <activity
             android:name=".activity.RegisterActivity"
             android:exported="false" />
@@ -56,7 +65,7 @@
             android:exported="false" />
         <activity
             android:name=".activity.MainActivity"
-            android:exported="false" /> <!-- Tidak lagi menjadi LAUNCHER -->
+            android:exported="false" />
 
     </application>
 
