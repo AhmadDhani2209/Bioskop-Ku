@@ -39,11 +39,22 @@
                 android:textStyle="bold"
                 tools:text="Judul Film yang Sangat Panjang Sekali" />
 
+            <!-- JADWAL TAYANG (BARU) -->
+            <TextView
+                android:id="@+id/tv_showtime_ticket"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#FFCC00"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="Jadwal: 14:00" />
+
             <TextView
                 android:id="@+id/tv_seats_ticket"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp"
                 tools:text="Kursi: A1, A2, B1" />
@@ -52,7 +63,7 @@
                 android:id="@+id/tv_price_ticket"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:textColor="#FBC02D"
                 android:textSize="16sp"
                 android:textStyle="bold"

@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Konfigurasi Google Client
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)) // Ambil dari string resource lebih aman
+                .requestIdToken("480039047684-kebtv1bn370vllu4bsohpr7a2j66seca.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
@@ -165,8 +165,10 @@ public class LoginActivity extends AppCompatActivity {
                 Intent intent;
                 if ("admin".equals(role)) {
                     intent = new Intent(LoginActivity.this, AdminHomeActivity.class);
+                    intent.putExtra("IS_ADMIN", true); // Kirim flag ke AdminHome
                 } else {
                     intent = new Intent(LoginActivity.this, HomeActivity.class);
+                    intent.putExtra("IS_ADMIN", false);
                 }
                 Toast.makeText(LoginActivity.this, "Login Berhasil!", Toast.LENGTH_SHORT).show();
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);

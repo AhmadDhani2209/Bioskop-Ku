@@ -74,18 +74,8 @@
             android:background="#1F1F1F"
             app:itemIconTint="@color/selector_bottom_nav"
             app:itemTextColor="@color/selector_bottom_nav"
-            app:menu="@menu/menu_bottom_nav" />
+            app:menu="@menu/admin_menu_bottom_nav" />
 
     </RelativeLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add_movie"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
-        android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="#FBC02D"
-        app:tint="@color/black" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

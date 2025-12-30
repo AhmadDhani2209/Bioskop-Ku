@@ -86,13 +86,18 @@ public class MovieDetailActivity extends AppCompatActivity {
             btnSelectSeat.setText("Beli Tiket - " + rupiah.format(movie.getPrice()));
 
             btnSelectSeat.setOnClickListener(v -> {
-                if (selectedTime == null) {
-                    Toast.makeText(this, "Pilih jadwal terlebih dahulu!", Toast.LENGTH_SHORT).show();
-                    return;
+
+                if ((schedules != null && !schedules.isEmpty()) && selectedTime == null) {
+                     Toast.makeText(this, "Pilih jadwal terlebih dahulu!", Toast.LENGTH_SHORT).show();
+                     return;
                 }
+                
                 Intent intent = new Intent(this, PilihKursiActivity.class);
                 intent.putExtra("movie", movie);
-                intent.putExtra("selected_time", selectedTime);
+                // Kirim jadwal terpilih jika ada
+                if (selectedTime != null) {
+                    intent.putExtra("selected_time", selectedTime);
+                }
                 startActivity(intent);
             });
 

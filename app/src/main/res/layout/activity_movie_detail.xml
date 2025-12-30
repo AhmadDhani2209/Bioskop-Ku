@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,6 +8,7 @@
     android:background="#121212"
     tools:context=".activity.MovieDetailActivity">
 
+    <!-- APP BAR -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
@@ -22,22 +24,26 @@
             app:contentScrim="#1F1F1F"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
 
+            <!-- BACKDROP IMAGE (NOT CROPPED) -->
             <ImageView
                 android:id="@+id/iv_backdrop"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="#000000"
                 android:fitsSystemWindows="true"
-                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 app:layout_collapseMode="parallax"
                 tools:src="@tools:sample/backgrounds/scenic" />
 
+            <!-- GRADIENT OVERLAY -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="120dp"
                 android:layout_gravity="bottom"
                 android:background="@drawable/bg_gradient_dark" />
 
+            <!-- TOOLBAR -->
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
@@ -47,6 +53,7 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- CONTENT -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -59,6 +66,7 @@
             android:layout_height="wrap_content"
             android:paddingBottom="24dp">
 
+            <!-- POSTER -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_poster"
                 android:layout_width="130dp"
@@ -71,14 +79,17 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
+                <!-- POSTER IMAGE (NOT CROPPED) -->
                 <ImageView
                     android:id="@+id/iv_poster_detail"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
                     tools:src="@tools:sample/avatars" />
             </androidx.cardview.widget.CardView>
 
+            <!-- TITLE -->
             <TextView
                 android:id="@+id/tv_title_detail"
                 android:layout_width="0dp"
@@ -92,10 +103,11 @@
                 android:textColor="#FFFFFF"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/card_poster"
-                app:layout_constraintTop_toTopOf="@id/card_poster" />
+                app:layout_constraintTop_toTopOf="@id/card_poster"
+                app:layout_constraintEnd_toEndOf="parent" />
 
+            <!-- GENRE -->
             <TextView
                 android:id="@+id/tv_genre_detail"
                 android:layout_width="0dp"
@@ -104,10 +116,11 @@
                 android:text="Genre Film"
                 android:textColor="#AAAAAA"
                 android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="@id/tv_title_detail"
                 app:layout_constraintStart_toStartOf="@id/tv_title_detail"
-                app:layout_constraintTop_toBottomOf="@id/tv_title_detail" />
+                app:layout_constraintTop_toBottomOf="@id/tv_title_detail"
+                app:layout_constraintEnd_toEndOf="@id/tv_title_detail" />
 
+            <!-- RATING -->
             <LinearLayout
                 android:id="@+id/layout_rating"
                 android:layout_width="wrap_content"
@@ -135,6 +148,7 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- SINOPSIS -->
             <TextView
                 android:id="@+id/tv_synopsis_label"
                 android:layout_width="wrap_content"
@@ -158,10 +172,11 @@
                 android:text="Deskripsi sinopsis..."
                 android:textColor="#CCCCCC"
                 android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_synopsis_label" />
 
+            <!-- SCHEDULE -->
             <TextView
                 android:id="@+id/tv_schedule_label"
                 android:layout_width="wrap_content"
@@ -180,27 +195,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:scrollbars="none"
-                android:clipToPadding="false"
                 android:paddingHorizontal="20dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_schedule_label">
+                android:scrollbars="none"
+                app:layout_constraintTop_toBottomOf="@id/tv_schedule_label">
 
                 <com.google.android.material.chip.ChipGroup
                     android:id="@+id/chip_group_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:singleLine="true"
-                    app:chipSpacingHorizontal="8dp"
-                    app:singleSelection="true">
-
-                </com.google.android.material.chip.ChipGroup>
+                    app:singleSelection="true"
+                    app:chipSpacingHorizontal="8dp"/>
             </HorizontalScrollView>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 
+    <!-- BUTTON -->
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/btn_select_seat"
         android:layout_width="match_parent"
@@ -208,12 +219,11 @@
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
         android:text="Beli Tiket"
-        android:textAlignment="center"
         android:textColor="#121212"
         android:textStyle="bold"
         app:backgroundTint="#FBC02D"
         app:icon="@drawable/ic_ticket"
         app:iconTint="#121212"
-        app:iconGravity="textStart"/>
+        app:iconGravity="textStart" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

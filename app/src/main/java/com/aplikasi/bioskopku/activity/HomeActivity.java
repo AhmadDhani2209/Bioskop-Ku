@@ -65,15 +65,19 @@ public class HomeActivity extends AppCompatActivity {
         fetchUsername();
         fetchMovies();
 
-        // --- PERBAIKAN NAVIGASI ---
+        // --- NAVIGATION ---
+        bottomNavigationView.setSelectedItemId(R.id.nav_home);
+
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_home) {
-                return true; // Sudah di halaman ini, tidak ada aksi
+                return true; 
             }
 
             Intent intent = null;
             if (itemId == R.id.nav_ticket) {
+                intent = new Intent(this, TicketActivity.class);
+            } else if (itemId == R.id.nav_history) {
                 intent = new Intent(this, HistoryActivity.class);
             } else if (itemId == R.id.nav_profile) {
                 intent = new Intent(this, ProfileActivity.class);
@@ -82,21 +86,18 @@ public class HomeActivity extends AppCompatActivity {
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
-                overridePendingTransition(0, 0); // Hilangkan animasi kedip
+                overridePendingTransition(0, 0);
             }
             return true;
         });
-        // -------------------------
     }
 
-    // --- PERBAIKAN SINKRONISASI WARNA NAVBAR ---
     @Override
     protected void onResume() {
         super.onResume();
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setSelectedItemId(R.id.nav_home);
     }
-    // ----------------------------------------
 
     private void fetchUsername() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();

@@ -19,7 +19,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -43,7 +42,6 @@ public class AdminHomeActivity extends AppCompatActivity {
     private TextView tvGreeting;
     private ProgressBar progressBar;
 
-    // PERBAIKAN: Tambahkan GoogleSignInClient untuk proses logout yang bersih
     private GoogleSignInClient mGoogleSignInClient;
 
     @Override
@@ -64,7 +62,6 @@ public class AdminHomeActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         rvMovies = findViewById(R.id.rv_movies);
         progressBar = findViewById(R.id.progress_bar);
-        FloatingActionButton fabAddMovie = findViewById(R.id.fab_add_movie);
 
         bottomNavigationView.getMenu().clear();
         bottomNavigationView.inflateMenu(R.menu.admin_menu_bottom_nav);
@@ -84,14 +81,20 @@ public class AdminHomeActivity extends AppCompatActivity {
 
         bottomNavigationView.setSelectedItemId(R.id.nav_admin_home);
 
-        // --- PERBAIKAN: LOGIKA NAVIGASI YANG BERSIH ---
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_admin_home) {
-                return true; // Tidak melakukan apa-apa karena sudah di halaman home
+                return true; 
+            }
+            if (itemId == R.id.nav_admin_tambah) {
+                startActivity(new Intent(AdminHomeActivity.this, AdminAddMovieActivity.class));
+                return true; 
+            }
+            if (itemId == R.id.nav_admin_hapus) {
+                startActivity(new Intent(AdminHomeActivity.this, AdminDeleteMovieActivity.class));
+                return true;
             }
             if (itemId == R.id.nav_admin_logout) {
-                // Proses logout yang benar
                 FirebaseAuth.getInstance().signOut();
                 mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
                     Toast.makeText(AdminHomeActivity.this, "Logout berhasil", Toast.LENGTH_SHORT).show();
@@ -103,11 +106,6 @@ public class AdminHomeActivity extends AppCompatActivity {
                 return true;
             }
             return false;
-        });
-        // ---------------------------------------------
-
-        fabAddMovie.setOnClickListener(v -> {
-            startActivity(new Intent(AdminHomeActivity.this, AdminAddMovieActivity.class));
         });
     }
 

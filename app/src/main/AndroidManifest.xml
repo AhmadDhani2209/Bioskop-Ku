@@ -21,9 +21,15 @@
         <activity
             android:name=".activity.AdminAddMovieActivity"
             android:exported="false" />
+        <activity
+            android:name=".activity.AdminDeleteMovieActivity"
+            android:exported="false" />
 
         <activity
             android:name=".activity.HistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.TicketActivity"
             android:exported="false" />
         <activity
             android:name=".activity.MovieDetailActivity"

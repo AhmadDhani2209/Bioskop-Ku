@@ -1,16 +1,13 @@
 package com.aplikasi.bioskopku.activity;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,30 +22,28 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class HistoryActivity extends AppCompatActivity implements TicketAdapter.OnTicketCancelListener {
+public class HistoryActivity extends AppCompatActivity {
 
     private RecyclerView rvHistory;
     private TicketAdapter ticketAdapter;
-    private List<Ticket> ticketList;
+    private List<Ticket> historyList;
     private LinearLayout emptyState;
     private ProgressBar progressBar;
     private DatabaseReference ticketsRef;
-    private Query ticketQuery;
-    private ValueEventListener ticketListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        ticketsRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("Tickets");
+        // Update referensi ke "tickets" (lowercase) jika ingin mengambil data
+        ticketsRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("tickets");
 
         rvHistory = findViewById(R.id.rv_history);
         emptyState = findViewById(R.id.empty_state);
@@ -56,20 +51,28 @@ public class HistoryActivity extends AppCompatActivity implements TicketAdapter.
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
-        ticketList = new ArrayList<>();
-        ticketAdapter = new TicketAdapter(this, ticketList);
+        historyList = new ArrayList<>();
+        // Gunakan adapter dengan isHistoryMode = true
+        ticketAdapter = new TicketAdapter(this, historyList, true);
         rvHistory.setAdapter(ticketAdapter);
 
-        // --- PERBAIKAN NAVIGASI ---
+        // Fetch Data
+        fetchHistoryTickets();
+
+        // Navigation
+        bottomNav.setSelectedItemId(R.id.nav_history);
+
         bottomNav.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.nav_ticket) {
-                return true; // Sudah di halaman ini, tidak perlu lakukan apa-apa
+            if (itemId == R.id.nav_history) {
+                return true; 
             }
 
             Intent intent = null;
             if (itemId == R.id.nav_home) {
                 intent = new Intent(this, HomeActivity.class);
+            } else if (itemId == R.id.nav_ticket) {
+                intent = new Intent(this, TicketActivity.class);
             } else if (itemId == R.id.nav_profile) {
                 intent = new Intent(this, ProfileActivity.class);
             }
@@ -77,103 +80,61 @@ public class HistoryActivity extends AppCompatActivity implements TicketAdapter.
             if (intent != null) {
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 startActivity(intent);
-                // Hilangkan animasi berkedip agar transisi mulus
                 overridePendingTransition(0, 0);
             }
             return true;
         });
-        // -------------------------
     }
 
-    // --- PERBAIKAN SINKRONISASI WARNA NAVBAR ---
+    private void fetchHistoryTickets() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        progressBar.setVisibility(View.VISIBLE);
+        // Logika: Ambil semua tiket user, lalu filter mana yang sudah lewat waktu
+        
+        ticketsRef.orderByChild("userId").equalTo(user.getUid())
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        historyList.clear();
+                        if (snapshot.exists()) {
+                            for (DataSnapshot data : snapshot.getChildren()) {
+                                Ticket ticket = data.getValue(Ticket.class);
+                                if (ticket != null) {
+                                    // TODO: Tambahkan logika filter waktu di sini
+                                    // Misal: if (isPast(ticket.getShowTime())) ...
+                                    
+                                    // Untuk sekarang, kita masukkan semua ke history agar tidak kosong
+                                    historyList.add(ticket);
+                                }
+                            }
+                        }
+                        
+                        progressBar.setVisibility(View.GONE);
+                        if (historyList.isEmpty()) {
+                            emptyState.setVisibility(View.VISIBLE);
+                            rvHistory.setVisibility(View.GONE);
+                        } else {
+                            Collections.reverse(historyList); // Yang terbaru di atas
+                            emptyState.setVisibility(View.GONE);
+                            rvHistory.setVisibility(View.VISIBLE);
+                        }
+                        ticketAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        progressBar.setVisibility(View.GONE);
+                        Toast.makeText(HistoryActivity.this, "Gagal memuat riwayat", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+    
     @Override
     protected void onResume() {
         super.onResume();
-        // Setiap kali halaman ini muncul, paksa item 'Tiket' yang terpilih
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
-        bottomNav.setSelectedItemId(R.id.nav_ticket);
-    }
-    // ----------------------------------------
-
-    private void fetchMyTickets() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            emptyState.setVisibility(View.VISIBLE);
-            return;
-        }
-
-        progressBar.setVisibility(View.VISIBLE);
-        rvHistory.setVisibility(View.GONE);
-        emptyState.setVisibility(View.GONE);
-
-        String myUid = user.getUid();
-        ticketQuery = ticketsRef.orderByChild("userId").equalTo(myUid);
-
-        ticketListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ticketList.clear();
-                if (snapshot.exists()) {
-                    for (DataSnapshot data : snapshot.getChildren()) {
-                        Ticket ticket = data.getValue(Ticket.class);
-                        if (ticket != null) {
-                            ticket.ticketId = data.getKey();
-                            ticketList.add(ticket);
-                        }
-                    }
-                }
-
-                progressBar.setVisibility(View.GONE);
-
-                if (ticketList.isEmpty()) {
-                    emptyState.setVisibility(View.VISIBLE);
-                    rvHistory.setVisibility(View.GONE);
-                } else {
-                    Collections.reverse(ticketList);
-                    emptyState.setVisibility(View.GONE);
-                    rvHistory.setVisibility(View.VISIBLE);
-                }
-                ticketAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                progressBar.setVisibility(View.GONE);
-                if (!isFinishing()) {
-                    Toast.makeText(HistoryActivity.this, "Gagal memuat tiket.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        };
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        fetchMyTickets();
-        if (ticketQuery != null && ticketListener != null) {
-            ticketQuery.addValueEventListener(ticketListener);
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (ticketQuery != null && ticketListener != null) {
-            ticketQuery.removeEventListener(ticketListener);
-        }
-    }
-
-    @Override
-    public void onCancelTicket(String ticketId) {
-        new AlertDialog.Builder(this)
-                .setTitle("Batalkan Tiket")
-                .setMessage("Apakah Anda yakin ingin membatalkan tiket ini?")
-                .setPositiveButton("Ya, Batalkan", (dialog, which) -> {
-                    ticketsRef.child(ticketId).removeValue()
-                            .addOnSuccessListener(aVoid -> Toast.makeText(HistoryActivity.this, "Tiket berhasil dibatalkan", Toast.LENGTH_SHORT).show())
-                            .addOnFailureListener(e -> Toast.makeText(HistoryActivity.this, "Gagal membatalkan tiket", Toast.LENGTH_SHORT).show());
-                })
-                .setNegativeButton("Tidak", null)
-                .show();
+        bottomNav.setSelectedItemId(R.id.nav_history);
     }
 }

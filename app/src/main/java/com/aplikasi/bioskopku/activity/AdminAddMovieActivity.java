@@ -27,7 +27,6 @@ public class AdminAddMovieActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_add_movie);
 
-        // Hubungkan ke node "movies" di Firebase
         databaseReference = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("movies");
 
         etTitle = findViewById(R.id.et_title);
