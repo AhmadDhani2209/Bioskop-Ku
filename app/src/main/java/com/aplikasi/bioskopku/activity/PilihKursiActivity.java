@@ -2,6 +2,8 @@ package com.aplikasi.bioskopku.activity;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,19 +13,24 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.model.Movie; 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.NumberFormat; 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale; 
 import java.util.Map;
 
@@ -59,6 +66,8 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
             CheckBox checkBox = findViewById(id);
             checkBox.setOnCheckedChangeListener(this);
         }
+
+        checkOccupiedSeats();
 
         btnBeliTiket.setOnClickListener(v -> {
             if (isTimePassed(selectedTime)) {
@@ -99,6 +108,61 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
             return false;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private void checkOccupiedSeats() {
+        mDatabase.child("Tickets").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                ArrayList<String> occupiedSeats = new ArrayList<>();
+                for (DataSnapshot data : snapshot.getChildren()) {
+                    String bookedMovie = data.child("movieTitle").getValue(String.class);
+                    String bookedTime = data.child("showTime").getValue(String.class);
+                    
+                    // Cek apakah film dan jamnya sama dengan yang sedang dibuka user
+                    if (movie.getTitle().equals(bookedMovie) && 
+                       (selectedTime != null && selectedTime.equals(bookedTime))) {
+                        
+                        // Cara aman membaca list seats
+                        Object seatsObj = data.child("seats").getValue();
+                        if (seatsObj instanceof List) {
+                            List<String> seats = (List<String>) seatsObj;
+                            if (seats != null) {
+                                occupiedSeats.addAll(seats);
+                            }
+                        }
+                    }
+                }
+                disableOccupiedSeats(occupiedSeats);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+    }
+
+    private void disableOccupiedSeats(ArrayList<String> occupiedSeats) {
+        int[] seatIds = {R.id.seatA1, R.id.seatA2, R.id.seatA3, R.id.seatA4, R.id.seatA5, R.id.seatA6, 
+                         R.id.seatB1, R.id.seatB2, R.id.seatB3, R.id.seatB4, R.id.seatB5, R.id.seatB6, 
+                         R.id.seatC1, R.id.seatC2, R.id.seatC3, R.id.seatC4, R.id.seatC5, R.id.seatC6, 
+                         R.id.seatD1, R.id.seatD2, R.id.seatD3, R.id.seatD4, R.id.seatD5, R.id.seatD6};
+
+        for (int id : seatIds) {
+            CheckBox checkBox = findViewById(id);
+            if (checkBox == null) continue;
+            
+            String seatLabel = checkBox.getText().toString(); 
+            
+            if (occupiedSeats.contains(seatLabel)) {
+                checkBox.setEnabled(false); // Tidak bisa diklik
+                checkBox.setChecked(false); // Pastikan tidak tercentang
+                checkBox.setButtonTintList(ColorStateList.valueOf(Color.GRAY)); // Ubah warna jadi abu-abu
+            } else {
+                checkBox.setEnabled(true);
+                // Kembalikan ke warna default jika tersedia (biasanya null atau ambil dari resources)
+                // checkBox.setButtonTintList(null); 
+            }
         }
     }
 
