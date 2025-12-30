@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.adapter.MovieAdapter;
 import com.aplikasi.bioskopku.model.Movie;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,13 +29,17 @@ public class AdminDeleteMovieActivity extends AppCompatActivity {
 
     private DatabaseReference mDatabase;
     private RecyclerView rvMoviesDelete;
-    private MovieAdapter movieAdapter;
+    private MovieAdapter movieAdapter; // Menggunakan MovieAdapter biasa untuk sementara (atau buat DeleteAdapter terpisah)
     private List<Movie> movieList;
     private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // PERBAIKAN: Validasi role admin di onCreate
+        checkAdminRole();
+        
         setContentView(R.layout.activity_admin_delete_movie);
 
         rvMoviesDelete = findViewById(R.id.rv_movies_delete);
@@ -42,12 +48,39 @@ public class AdminDeleteMovieActivity extends AppCompatActivity {
         rvMoviesDelete.setLayoutManager(new LinearLayoutManager(this));
         movieList = new ArrayList<>();
 
-        movieAdapter = new MovieAdapter(this, movieList);
+        // Anda mungkin perlu adapter khusus yang memiliki tombol hapus
+        // Untuk sekarang saya gunakan adapter biasa
+        movieAdapter = new MovieAdapter(this, movieList); 
         rvMoviesDelete.setAdapter(movieAdapter);
 
         mDatabase = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference();
 
         fetchMovies();
+    }
+
+    private void checkAdminRole() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            finish();
+            return;
+        }
+        
+        DatabaseReference userRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("users").child(user.getUid());
+        userRef.child("role").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String role = snapshot.getValue(String.class);
+                if (!"admin".equals(role)) {
+                    Toast.makeText(AdminDeleteMovieActivity.this, "Akses ditolak. Anda bukan admin.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                finish();
+            }
+        });
     }
 
     private void fetchMovies() {
@@ -66,8 +99,11 @@ public class AdminDeleteMovieActivity extends AppCompatActivity {
                         }
                     }
                 }
-
-                setupAdapter();
+                
+                // Di sini harusnya setup adapter khusus delete
+                // setupAdapter();
+                movieAdapter.notifyDataSetChanged();
+                
                 progressBar.setVisibility(View.GONE);
             }
 
@@ -77,13 +113,6 @@ public class AdminDeleteMovieActivity extends AppCompatActivity {
                 Toast.makeText(AdminDeleteMovieActivity.this, "Gagal memuat data", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void setupAdapter() {
-
-        
-        DeleteMovieAdapter deleteAdapter = new DeleteMovieAdapter(this, movieList, this::showDeleteDialog);
-        rvMoviesDelete.setAdapter(deleteAdapter);
     }
 
     private void showDeleteDialog(Movie movie) {

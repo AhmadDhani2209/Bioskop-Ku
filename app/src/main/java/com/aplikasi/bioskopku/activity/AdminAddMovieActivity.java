@@ -10,8 +10,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.model.Movie;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +30,10 @@ public class AdminAddMovieActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // PERBAIKAN: Validasi role admin di onCreate
+        checkAdminRole();
+        
         setContentView(R.layout.activity_admin_add_movie);
 
         databaseReference = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("movies");
@@ -39,6 +48,31 @@ public class AdminAddMovieActivity extends AppCompatActivity {
         Button btnSaveMovie = findViewById(R.id.btn_save_movie);
 
         btnSaveMovie.setOnClickListener(v -> saveMovie());
+    }
+
+    private void checkAdminRole() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            finish();
+            return;
+        }
+        
+        DatabaseReference userRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("users").child(user.getUid());
+        userRef.child("role").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String role = snapshot.getValue(String.class);
+                if (!"admin".equals(role)) {
+                    Toast.makeText(AdminAddMovieActivity.this, "Akses ditolak. Anda bukan admin.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                finish();
+            }
+        });
     }
 
     private void saveMovie() {
@@ -65,10 +99,8 @@ public class AdminAddMovieActivity extends AppCompatActivity {
             return;
         }
 
-        // Pisahkan jadwal jadi List<String>
         List<String> scheduleList = new ArrayList<>(Arrays.asList(scheduleStr.split("\\s*,\\s*")));
 
-        // Buat ID unik untuk film baru
         String movieId = databaseReference.push().getKey();
 
         Movie movie = new Movie();
@@ -84,7 +116,7 @@ public class AdminAddMovieActivity extends AppCompatActivity {
             databaseReference.child(movieId).setValue(movie).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Toast.makeText(AdminAddMovieActivity.this, "Film berhasil disimpan", Toast.LENGTH_SHORT).show();
-                    finish(); // Tutup halaman form setelah berhasil
+                    finish(); 
                 } else {
                     Toast.makeText(AdminAddMovieActivity.this, "Gagal menyimpan film", Toast.LENGTH_SHORT).show();
                 }
