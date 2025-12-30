@@ -32,14 +32,14 @@ public class Ticket implements Serializable {
     public List<String> getSeats() { return seats; }
 
     /**
-     * PERBAIKAN: Menghitung timestamp tayang sebenarnya.
-     * Menggabungkan tanggal dari `purchaseDate` dengan jam dari `showTime`.
+     * PERBAIKAN: Menghitung timestamp tayang berdasarkan HARI INI.
+     * Ini memastikan perbandingan waktu selalu relevan.
      * @return long timestamp
      */
     @Exclude // Agar tidak disimpan ke Firebase
     public long getShowTimestamp() {
         if (showTime == null || showTime.isEmpty()) {
-            return purchaseDate; // Fallback jika tidak ada jam tayang
+            return -1; // Beri nilai invalid jika jam tidak ada
         }
 
         try {
@@ -47,8 +47,8 @@ public class Ticket implements Serializable {
             int hour = Integer.parseInt(timeParts[0]);
             int minute = Integer.parseInt(timeParts[1]);
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(purchaseDate);
+            // Gunakan tanggal HARI INI, bukan tanggal pembelian
+            Calendar calendar = Calendar.getInstance(); 
             calendar.set(Calendar.HOUR_OF_DAY, hour);
             calendar.set(Calendar.MINUTE, minute);
             calendar.set(Calendar.SECOND, 0);
@@ -56,7 +56,7 @@ public class Ticket implements Serializable {
 
             return calendar.getTimeInMillis();
         } catch (Exception e) {
-            return purchaseDate; // Fallback jika format jam salah
+            return -1; // Fallback jika format jam salah
         }
     }
 }

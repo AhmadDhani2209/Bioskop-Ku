@@ -39,7 +39,7 @@
                 android:textStyle="bold"
                 tools:text="Judul Film yang Sangat Panjang Sekali" />
 
-            <!-- JADWAL TAYANG (BARU) -->
+            <!-- JADWAL TAYANG -->
             <TextView
                 android:id="@+id/tv_showtime_ticket"
                 android:layout_width="wrap_content"
@@ -49,6 +49,16 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 tools:text="Jadwal: 14:00" />
+            
+            <!-- TANGGAL (BARU) -->
+            <TextView
+                android:id="@+id/tv_date_ticket"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                tools:text="Senin, 10 Jan 2025" />
 
             <TextView
                 android:id="@+id/tv_seats_ticket"

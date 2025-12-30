@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#121212"
-    tools:context=".activity.HistoryActivity">
+    tools:context=".activity.TicketActivity">
 
     <LinearLayout
         android:id="@+id/header_layout"
@@ -59,10 +59,11 @@
         android:visibility="gone"
         tools:visibility="gone">
 
+        <!-- Menggunakan ikon tiket -->
         <ImageView
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/history_svgrepo_com"
+            android:src="@drawable/ic_ticket"
             app:tint="#404040" />
 
         <TextView

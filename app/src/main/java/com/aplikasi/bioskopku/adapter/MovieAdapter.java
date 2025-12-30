@@ -15,6 +15,8 @@ import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.activity.MovieDetailActivity;
 import com.aplikasi.bioskopku.model.Movie;
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -24,12 +26,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     private final Context context;
     private final List<Movie> movieList;
-    private final NumberFormat rupiahFormat; // Dipindahkan ke sini
+    private final NumberFormat rupiahFormat;
 
     public MovieAdapter(Context context, List<Movie> movieList) {
         this.context = context;
         this.movieList = movieList;
-        // Diinisialisasi sekali di constructor untuk efisiensi
         this.rupiahFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     }
 
@@ -47,14 +48,28 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         holder.tvTitle.setText(movie.getTitle());
         holder.tvGenre.setText(movie.getGenre());
         holder.tvRating.setText("⭐ " + movie.getRating());
-
-        // Menggunakan instance yang sudah ada
         holder.btnPrice.setText(rupiahFormat.format(movie.getPrice()));
 
-        Glide.with(context)
-                .load(movie.getPoster())
-                .placeholder(R.drawable.ic_image_broken)
-                .into(holder.ivPoster);
+        // PERBAIKAN: Menangani URL gambar dari Firebase Storage (gs://)
+        String posterUrl = movie.getPoster();
+        if (posterUrl != null) {
+            if (posterUrl.startsWith("gs://")) {
+                // Jika format gs://, gunakan FirebaseStorage reference
+                StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(posterUrl);
+                Glide.with(context)
+                        .load(storageReference)
+                        .placeholder(R.drawable.ic_image_broken)
+                        .into(holder.ivPoster);
+            } else {
+                // Jika format http/https biasa
+                Glide.with(context)
+                        .load(posterUrl)
+                        .placeholder(R.drawable.ic_image_broken)
+                        .into(holder.ivPoster);
+            }
+        } else {
+            holder.ivPoster.setImageResource(R.drawable.ic_image_broken);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, MovieDetailActivity.class);
@@ -65,7 +80,6 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     @Override
     public int getItemCount() {
-        // Ditambahkan pengecekan null untuk keamanan
         return movieList != null ? movieList.size() : 0;
     }
 

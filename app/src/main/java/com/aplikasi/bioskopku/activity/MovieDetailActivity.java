@@ -19,6 +19,8 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -58,9 +60,23 @@ public class MovieDetailActivity extends AppCompatActivity {
             tvRating.setText(movie.getRating());
             tvSynopsis.setText(movie.getDescription());
 
-            Glide.with(this).load(movie.getPoster()).into(ivPoster);
-            ivBackdrop.setColorFilter(Color.rgb(80, 80, 80), PorterDuff.Mode.MULTIPLY);
-            Glide.with(this).load(movie.getPoster()).into(ivBackdrop);
+            // PERBAIKAN: Gunakan logika yang sama dengan Adapter untuk load gambar
+            String posterUrl = movie.getPoster();
+            if (posterUrl != null) {
+                if (posterUrl.startsWith("gs://")) {
+                    StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(posterUrl);
+                    
+                    Glide.with(this).load(storageReference).into(ivPoster);
+                    
+                    ivBackdrop.setColorFilter(Color.rgb(80, 80, 80), PorterDuff.Mode.MULTIPLY);
+                    Glide.with(this).load(storageReference).into(ivBackdrop);
+                } else {
+                    Glide.with(this).load(posterUrl).into(ivPoster);
+                    
+                    ivBackdrop.setColorFilter(Color.rgb(80, 80, 80), PorterDuff.Mode.MULTIPLY);
+                    Glide.with(this).load(posterUrl).into(ivBackdrop);
+                }
+            }
 
             cardPoster.setAlpha(0f);
             cardPoster.setScaleX(0.8f);

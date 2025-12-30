@@ -1,10 +1,12 @@
 package com.aplikasi.bioskopku.activity;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -19,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.adapter.TicketAdapter;
 import com.aplikasi.bioskopku.model.Ticket;
-import com.bumptech.glide.Glide;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,11 +31,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class TicketActivity extends AppCompatActivity implements TicketAdapter.OnTicketActionListener {
 
@@ -52,7 +52,7 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ticket);
 
-        ticketsRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("tickets");
+        ticketsRef = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference("Tickets");
 
         rvHistory = findViewById(R.id.rv_history);
         emptyState = findViewById(R.id.empty_state);
@@ -61,13 +61,10 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
 
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
         ticketList = new ArrayList<>();
-        // Mode Tiket Aktif (isHistoryMode = false)
         ticketAdapter = new TicketAdapter(this, ticketList, false);
         rvHistory.setAdapter(ticketAdapter);
 
-        // --- NAVIGATION ---
         bottomNav.setSelectedItemId(R.id.nav_ticket);
-
         bottomNav.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.nav_ticket) return true;
@@ -95,6 +92,7 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
         super.onResume();
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setSelectedItemId(R.id.nav_ticket);
+        fetchMyTickets(); // Refresh data saat resume agar update otomatis
     }
 
     private void fetchMyTickets() {
@@ -104,10 +102,11 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
             return;
         }
 
-        progressBar.setVisibility(View.VISIBLE);
-        rvHistory.setVisibility(View.GONE);
-        emptyState.setVisibility(View.GONE);
+        if (ticketListener != null && ticketQuery != null) {
+            ticketQuery.removeEventListener(ticketListener);
+        }
 
+        progressBar.setVisibility(View.VISIBLE);
         String myUid = user.getUid();
         ticketQuery = ticketsRef.orderByChild("userId").equalTo(myUid);
 
@@ -123,9 +122,12 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
                         if (ticket != null) {
                             ticket.setTicketId(data.getKey());
                             
-                            // FILTER: Tampilkan hanya jika jadwal BELUM lewat
-                            // Jika jadwal kosong, anggap active (atau sesuaikan kebutuhan)
-                            if (ticket.getShowTimestamp() > currentTime) {
+                            // PERBAIKAN: Hanya tampilkan tiket yang belum lewat (Masa Depan)
+                            long showTime = ticket.getShowTimestamp();
+                            
+                            // Jika showTime valid dan MASIH AKAN DATANG (lebih besar dari sekarang)
+                            // Atau jika showTime tidak valid (-1), kita anggap aktif dulu biar user tidak bingung
+                            if (showTime != -1 && showTime >= currentTime) {
                                 ticketList.add(ticket);
                             }
                         }
@@ -138,7 +140,7 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
                     emptyState.setVisibility(View.VISIBLE);
                     rvHistory.setVisibility(View.GONE);
                 } else {
-                    Collections.reverse(ticketList); // Paling baru di atas
+                    Collections.reverse(ticketList);
                     emptyState.setVisibility(View.GONE);
                     rvHistory.setVisibility(View.VISIBLE);
                 }
@@ -148,30 +150,11 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
                 progressBar.setVisibility(View.GONE);
-                if (!isFinishing()) {
-                    Toast.makeText(TicketActivity.this, "Gagal memuat tiket.", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(TicketActivity.this, "Gagal memuat tiket.", Toast.LENGTH_SHORT).show();
             }
         };
         ticketQuery.addValueEventListener(ticketListener);
     }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (ticketListener == null) {
-            fetchMyTickets();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (ticketQuery != null && ticketListener != null) {
-            ticketQuery.removeEventListener(ticketListener);
-        }
-    }
-
 
     @Override
     public void onTicketClick(Ticket ticket) {
@@ -194,39 +177,41 @@ public class TicketActivity extends AppCompatActivity implements TicketAdapter.O
 
     @Override
     public void onDeleteHistory(String ticketId) {
-        // Tidak dipakai di TicketActivity (Active)
+        // Tidak dipakai
     }
 
     private void showTicketDetailDialog(Ticket ticket) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View view = LayoutInflater.from(this).inflate(R.layout.dialog_pembayaran, null); // Gunakan layout yang ada atau buat baru dialog_ticket_detail
-        // Kita modifikasi tampilan dialog_pembayaran sedikit secara programatik atau buat layout baru.
-        // Agar cepat, saya buat layout sederhana on-the-fly atau reuse dialog_pembayaran tapi ganti teks.
-        
-        // Sebaiknya reuse dialog_pembayaran tapi sesuaikan isinya
-        TextView tvTitle = view.findViewById(R.id.tv_movie_title);
-        TextView tvSeats = view.findViewById(R.id.tv_seats);
-        TextView tvPrice = view.findViewById(R.id.tv_total_price);
-        TextView tvHeader = ((TextView) ((LinearLayout) view).getChildAt(0)); // "Konfirmasi Pembayaran"
-        
-        ImageView ivQr = ((ImageView) ((LinearLayout) view).getChildAt(4)); // QR Code
-        TextView tvScan = ((TextView) ((LinearLayout) view).getChildAt(5)); // "Scan QRIS..."
-        
-        view.findViewById(R.id.btn_konfirmasi_bayar).setVisibility(View.GONE);
-        view.findViewById(R.id.btn_batal_bayar).setVisibility(View.GONE); // Atau ganti jadi "Tutup"
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_ticket_detail, null);
 
-        // Set Data
+        TextView tvHeader = view.findViewById(R.id.dialog_header);
+        TextView tvTitle = view.findViewById(R.id.dialog_movie_title);
+        TextView tvShowtime = view.findViewById(R.id.dialog_showtime);
+        TextView tvSeats = view.findViewById(R.id.dialog_seats);
+        ImageView ivQr = view.findViewById(R.id.iv_qr_code);
+        Button btnClose = view.findViewById(R.id.btn_close_dialog);
+
         tvHeader.setText("E-Tiket Bioskop");
         tvTitle.setText(ticket.getMovieTitle());
-        tvSeats.setText("Kursi: " + ticket.getSeats().toString().replace("[","").replace("]",""));
         
-        NumberFormat rupiah = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-        tvPrice.setText("Jadwal: " + ticket.getShowTime()); // Ganti total harga jadi jadwal atau tampilkan keduanya
+        String showTime = ticket.getShowTime();
+        tvShowtime.setText(showTime != null ? "Jadwal: " + showTime : "Jadwal: -");
         
-        tvScan.setText("Tunjukkan QR Code ini ke petugas bioskop");
+        String seats = ticket.getSeats() != null ? ticket.getSeats().toString().replace("[","").replace("]","") : "-";
+        tvSeats.setText("Kursi: " + seats);
+        
+        ivQr.setAlpha(1.0f);
 
-        builder.setView(view);
-        builder.setPositiveButton("Tutup", null);
-        builder.show();
+        AlertDialog dialog = builder.setView(view).create();
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+    
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (ticketQuery != null && ticketListener != null) {
+            ticketQuery.removeEventListener(ticketListener);
+        }
     }
 }

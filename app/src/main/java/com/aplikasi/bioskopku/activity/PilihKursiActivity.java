@@ -22,6 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.NumberFormat; 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale; 
 import java.util.Map;
@@ -60,6 +61,11 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         }
 
         btnBeliTiket.setOnClickListener(v -> {
+            if (isTimePassed(selectedTime)) {
+                Toast.makeText(this, "Maaf, jam tayang sudah lewat. Tidak bisa memesan tiket.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             if (kursiTerpilih.isEmpty()) {
                 Toast.makeText(this, "Silakan pilih kursi terlebih dahulu", Toast.LENGTH_SHORT).show();
             } else {
@@ -68,6 +74,32 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         });
 
         updateTotalHarga();
+    }
+
+    // Fungsi helper untuk mengecek apakah waktu sudah lewat
+    private boolean isTimePassed(String timeString) {
+        if (timeString == null || timeString.isEmpty()) return false;
+        
+        try {
+            String[] parts = timeString.split(":");
+            int showHour = Integer.parseInt(parts[0]);
+            int showMinute = Integer.parseInt(parts[1]);
+
+            Calendar now = Calendar.getInstance();
+            int currentHour = now.get(Calendar.HOUR_OF_DAY);
+            int currentMinute = now.get(Calendar.MINUTE);
+
+            // Logika sederhana: Jika jam sekarang lebih besar, berarti lewat.
+            // Jika jam sama tapi menit sekarang lebih besar, berarti lewat.
+            if (currentHour > showHour) {
+                return true;
+            } else if (currentHour == showHour && currentMinute >= showMinute) {
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -154,7 +186,9 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         mDatabase.child("Tickets").child(orderId).setValue(ticketData)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(PilihKursiActivity.this, "Tiket berhasil dibeli!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(PilihKursiActivity.this, HistoryActivity.class); 
+                    
+                    // Arahkan ke TicketActivity (bukan HistoryActivity) agar user bisa melihat tiketnya di menu Tiket
+                    Intent intent = new Intent(PilihKursiActivity.this, TicketActivity.class); 
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();

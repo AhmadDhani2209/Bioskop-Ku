@@ -43,13 +43,17 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
-    // PERBAIKAN: Implementasikan Firebase BOM dengan benar
-    implementation(platform(libs.firebase.bom))
+    // PERBAIKAN: Menambahkan library Firebase Storage dan Firebase UI Storage
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.firebaseui:firebase-ui-storage:8.0.2")
 
-    // PERBAIKAN: Gunakan alias dari libs.versions.toml
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.play.services.auth)
+
+    // Annotation processor for Glide
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

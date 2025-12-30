@@ -14,8 +14,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aplikasi.bioskopku.R;
 import com.aplikasi.bioskopku.model.Ticket;
 import com.bumptech.glide.Glide;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -24,14 +28,12 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
     private final Context context;
     private final List<Ticket> ticketList;
     private final boolean isHistoryMode;
-
-    // PERBAIKAN: Pisahkan listener untuk klik item dan klik batal
     private final OnTicketActionListener actionListener;
 
     public interface OnTicketActionListener {
         void onTicketClick(Ticket ticket);
-        void onCancelTicket(String ticketId); // Untuk batal
-        void onDeleteHistory(String ticketId); // Untuk hapus riwayat
+        void onCancelTicket(String ticketId);
+        void onDeleteHistory(String ticketId);
     }
 
     public TicketAdapter(Context context, List<Ticket> ticketList, boolean isHistoryMode) {
@@ -67,10 +69,42 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
         String showTime = ticket.getShowTime();
         holder.tvShowTime.setText(showTime != null ? "Jadwal: " + showTime : "Jadwal: -");
         holder.tvShowTime.setVisibility(showTime != null ? View.VISIBLE : View.GONE);
+        
+        // PERBAIKAN: Menampilkan Tanggal Tayang
+        long timestamp = ticket.getShowTimestamp();
+        if (timestamp != -1) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd MMMM yyyy", new Locale("id", "ID"));
+            holder.tvDate.setText(dateFormat.format(new Date(timestamp)));
+            holder.tvDate.setVisibility(View.VISIBLE);
+        } else {
+            // Jika tidak ada timestamp (jam tidak valid), coba tampilkan tanggal pembelian
+            if (ticket.purchaseDate > 0) {
+                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy (Pembelian)", new Locale("id", "ID"));
+                 holder.tvDate.setText(dateFormat.format(new Date(ticket.purchaseDate)));
+                 holder.tvDate.setVisibility(View.VISIBLE);
+            } else {
+                 holder.tvDate.setVisibility(View.GONE);
+            }
+        }
 
-        Glide.with(context).load(ticket.getMoviePoster()).placeholder(R.drawable.ic_image_broken).into(holder.ivPoster);
+        String posterUrl = ticket.getMoviePoster();
+        if (posterUrl != null) {
+            if (posterUrl.startsWith("gs://")) {
+                StorageReference storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(posterUrl);
+                Glide.with(context)
+                        .load(storageReference)
+                        .placeholder(R.drawable.ic_image_broken)
+                        .into(holder.ivPoster);
+            } else {
+                Glide.with(context)
+                        .load(posterUrl)
+                        .placeholder(R.drawable.ic_image_broken)
+                        .into(holder.ivPoster);
+            }
+        } else {
+            holder.ivPoster.setImageResource(R.drawable.ic_image_broken);
+        }
 
-        // PERBAIKAN: Logika tombol berdasarkan mode
         if (isHistoryMode) {
             holder.tvCancel.setText("Hapus Riwayat");
             holder.tvCancel.setOnClickListener(v -> actionListener.onDeleteHistory(ticket.getTicketId()));
@@ -79,7 +113,6 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
             holder.tvCancel.setOnClickListener(v -> actionListener.onCancelTicket(ticket.getTicketId()));
         }
         
-        // PERBAIKAN: Klik pada seluruh item
         holder.itemView.setOnClickListener(v -> actionListener.onTicketClick(ticket));
     }
 
@@ -89,13 +122,14 @@ public class TicketAdapter extends RecyclerView.Adapter<TicketAdapter.TicketView
     }
 
     static class TicketViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvShowTime, tvSeats, tvTotalPrice, tvCancel;
+        TextView tvTitle, tvShowTime, tvDate, tvSeats, tvTotalPrice, tvCancel;
         ImageView ivPoster;
 
         TicketViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_movie_title_ticket);
             tvShowTime = itemView.findViewById(R.id.tv_showtime_ticket);
+            tvDate = itemView.findViewById(R.id.tv_date_ticket); // Pastikan ID ini ada di layout
             tvSeats = itemView.findViewById(R.id.tv_seats_ticket);
             tvTotalPrice = itemView.findViewById(R.id.tv_price_ticket);
             ivPoster = itemView.findViewById(R.id.iv_poster_ticket);

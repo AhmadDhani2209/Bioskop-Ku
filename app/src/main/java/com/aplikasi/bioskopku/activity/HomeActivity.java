@@ -60,6 +60,7 @@ public class HomeActivity extends AppCompatActivity {
         movieAdapter = new MovieAdapter(this, movieList);
         rvMovies.setAdapter(movieAdapter);
 
+        // PERBAIKAN: Pastikan URL database benar
         mDatabase = FirebaseDatabase.getInstance("https://bioskop-ku-default-rtdb.firebaseio.com/").getReference();
 
         fetchUsername();
@@ -102,10 +103,16 @@ public class HomeActivity extends AppCompatActivity {
     private void fetchUsername() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null && tvGreeting != null) {
-            mDatabase.child("users").child(user.getUid()).child("username").addListenerForSingleValueEvent(new ValueEventListener() {
+            // Cek path users. Kadang user disimpan langsung di root users/{uid}
+            mDatabase.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    String username = snapshot.getValue(String.class);
+                    // Coba ambil username, kalau gak ada ambil name
+                    String username = snapshot.child("username").getValue(String.class);
+                    if (username == null) {
+                         username = snapshot.child("name").getValue(String.class);
+                    }
+                    
                     if (username != null && !username.isEmpty()) {
                         tvGreeting.setText("Halo, " + username);
                     } else {
@@ -123,20 +130,32 @@ public class HomeActivity extends AppCompatActivity {
 
     private void fetchMovies() {
         progressBar.setVisibility(View.VISIBLE);
+        // PERBAIKAN: Gunakan addListenerForSingleValueEvent untuk debug awal, atau tetap addValueEventListener
         mDatabase.child("movies").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 movieList.clear();
                 if (!snapshot.exists()) {
+                    Log.d(TAG, "Snapshot movies kosong");
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(HomeActivity.this, "Belum ada film yang ditambahkan.", Toast.LENGTH_SHORT).show();
+                    // Jangan tampilkan toast dulu, siapa tau loading lambat
                     return;
                 }
 
                 for (DataSnapshot data : snapshot.getChildren()) {
-                    Movie movie = data.getValue(Movie.class);
-                    if (movie != null) {
-                        movieList.add(movie);
+                    try {
+                        Movie movie = data.getValue(Movie.class);
+                        if (movie != null) {
+                            movie.setKey(data.getKey());
+                            // Handle rating yang bisa berupa String atau Long/Double dari Firebase
+                            Object ratingObj = data.child("rating").getValue();
+                            movie.rating = ratingObj;
+                            
+                            movieList.add(movie);
+                            Log.d(TAG, "Movie added: " + movie.getTitle());
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing movie: " + e.getMessage());
                     }
                 }
                 movieAdapter.notifyDataSetChanged();
