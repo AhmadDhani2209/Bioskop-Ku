@@ -1,7 +1,10 @@
 package com.aplikasi.bioskopku.activity;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -67,6 +70,9 @@ public class ProfileActivity extends AppCompatActivity {
         fetchUserData();
 
         btnSave.setOnClickListener(v -> saveProfile());
+        
+        // PERBAIKAN: Klik Saldo untuk Top Up
+        tvBalance.setOnClickListener(v -> showTopUpDialog());
 
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
@@ -110,7 +116,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void fetchUserData() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            mDatabase.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            mDatabase.child("users").child(user.getUid()).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     User userData = snapshot.getValue(User.class);
@@ -119,7 +125,16 @@ public class ProfileActivity extends AppCompatActivity {
                         tvEmail.setText(userData.email);
                         
                         NumberFormat rupiah = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-                        tvBalance.setText("Saldo: " + rupiah.format(userData.balance));
+                        // Gunakan object karena balance bisa Long atau Double
+                        Object balanceObj = snapshot.child("balance").getValue();
+                        long balance = 0;
+                        if (balanceObj instanceof Long) {
+                            balance = (Long) balanceObj;
+                        } else if (balanceObj instanceof Double) {
+                            balance = ((Double) balanceObj).longValue();
+                        }
+                        
+                        tvBalance.setText("Saldo: " + rupiah.format(balance));
 
                         if (userData.fullName != null) etFullName.setText(userData.fullName);
                         if (userData.address != null) etAddress.setText(userData.address);
@@ -151,6 +166,74 @@ public class ProfileActivity extends AppCompatActivity {
         mDatabase.child("users").child(user.getUid()).updateChildren(updates)
                 .addOnSuccessListener(aVoid -> Toast.makeText(ProfileActivity.this, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(ProfileActivity.this, "Gagal menyimpan profil", Toast.LENGTH_SHORT).show());
+    }
+    
+    // PERBAIKAN: Dialog Top Up
+    private void showTopUpDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_topup, null);
+        builder.setView(dialogView);
+        
+        AlertDialog dialog = builder.create();
+        
+        EditText etNominal = dialogView.findViewById(R.id.et_nominal_topup);
+        Button btnConfirm = dialogView.findViewById(R.id.btn_confirm_topup);
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel_topup);
+        
+        btnConfirm.setOnClickListener(v -> {
+            String nominalStr = etNominal.getText().toString().trim();
+            if (nominalStr.isEmpty()) {
+                etNominal.setError("Masukkan nominal");
+                return;
+            }
+            
+            try {
+                long nominal = Long.parseLong(nominalStr);
+                if (nominal < 10000) {
+                     etNominal.setError("Minimal top up Rp10.000");
+                     return;
+                }
+                processTopUp(nominal);
+                dialog.dismiss();
+            } catch (NumberFormatException e) {
+                etNominal.setError("Nominal tidak valid");
+            }
+        });
+        
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+    }
+    
+    private void processTopUp(long jumlahTopUp) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+        
+        DatabaseReference userRef = mDatabase.child("users").child(user.getUid());
+
+        userRef.child("balance").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                long currentBalance = 0;
+                Object balanceObj = snapshot.getValue();
+                if (balanceObj instanceof Long) {
+                    currentBalance = (Long) balanceObj;
+                } else if (balanceObj instanceof Double) {
+                    currentBalance = ((Double) balanceObj).longValue();
+                }
+
+                // Tambahkan saldo baru
+                userRef.child("balance").setValue(currentBalance + jumlahTopUp)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(ProfileActivity.this, "Top Up Berhasil!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(ProfileActivity.this, "Gagal Top Up", Toast.LENGTH_SHORT).show();
+                    });
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
     }
 
     @Override

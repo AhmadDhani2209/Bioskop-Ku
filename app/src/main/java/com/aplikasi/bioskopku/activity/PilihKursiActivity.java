@@ -109,19 +109,15 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         }
     }
 
-    // PERBAIKAN 1: Optimasi Query (Filter by Movie Title)
     private void checkOccupiedSeats() {
-        // Hanya ambil tiket yang judul filmnya sama dengan film yang sedang dibuka
         mDatabase.child("Tickets").orderByChild("movieTitle").equalTo(movie.getTitle())
                 .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 ArrayList<String> occupiedSeats = new ArrayList<>();
                 for (DataSnapshot data : snapshot.getChildren()) {
-                    // Judul film sudah pasti sama karena difilter di query
                     String bookedTime = data.child("showTime").getValue(String.class);
                     
-                    // Cek apakah jamnya sama
                     if (selectedTime != null && selectedTime.equals(bookedTime)) {
                         Object seatsObj = data.child("seats").getValue();
                         if (seatsObj instanceof List) {
@@ -153,13 +149,12 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
             String seatLabel = checkBox.getText().toString(); 
             
             if (occupiedSeats.contains(seatLabel)) {
-                checkBox.setEnabled(false); // Tidak bisa diklik
-                checkBox.setChecked(false); // Pastikan tidak tercentang
-                checkBox.setButtonTintList(ColorStateList.valueOf(Color.GRAY)); // Ubah warna jadi abu-abu
+                checkBox.setEnabled(false); 
+                checkBox.setChecked(false); 
+                checkBox.setButtonTintList(ColorStateList.valueOf(Color.GRAY)); 
             } else {
-                // PERBAIKAN 3: Mengembalikan status kursi jika data berubah
                 checkBox.setEnabled(true);
-                checkBox.setButtonTintList(null); // Kembalikan warna default
+                checkBox.setButtonTintList(null); 
             }
         }
     }
@@ -210,7 +205,6 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         tvTotalPrice.setText("Total: " + rupiahFormat.format(total));
 
         btnConfirm.setOnClickListener(v -> {
-            // PERBAIKAN 2: Panggil validasi sebelum proses beli
             validateAndPurchaseTicket(dialog);
         });
 
@@ -219,12 +213,10 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         dialog.show();
     }
 
-    // PERBAIKAN 2: Validasi Akhir (Race Condition Check)
     private void validateAndPurchaseTicket(AlertDialog dialog) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        // Cek sekali lagi ke database sebelum menyimpan
         mDatabase.child("Tickets").orderByChild("movieTitle").equalTo(movie.getTitle())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -239,7 +231,6 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
                         if (seatsObj instanceof List) {
                             List<String> bookedSeats = (List<String>) seatsObj;
                             if (bookedSeats != null) {
-                                // Cek apakah ada kursi pilihan user yang sudah terbooking
                                 for (String mySeat : kursiTerpilih) {
                                     if (bookedSeats.contains(mySeat)) {
                                         isConflict = true;
@@ -255,7 +246,6 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
                 if (isConflict) {
                     dialog.dismiss();
                     Toast.makeText(PilihKursiActivity.this, "Maaf, salah satu kursi baru saja dipesan orang lain!", Toast.LENGTH_LONG).show();
-                    // UI akan otomatis update karena ada listener checkOccupiedSeats
                 } else {
                     processTicketPurchase(dialog);
                 }
@@ -276,10 +266,45 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         }
 
         String userId = user.getUid();
-        String orderId = mDatabase.child("Tickets").push().getKey();
+        int totalHarga = kursiTerpilih.size() * movie.getPrice();
 
+        // 1. Ambil data saldo user dari Firebase
+        mDatabase.child("users").child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                // Ambil saldo saat ini (default 0 jika null)
+                Long currentBalance = snapshot.child("balance").getValue(Long.class);
+                if (currentBalance == null) currentBalance = 0L;
+
+                // 2. Cek apakah saldo cukup
+                if (currentBalance >= totalHarga) {
+                    // SALDO CUKUP -> Lanjutkan transaksi
+                    long newBalance = currentBalance - totalHarga;
+                    
+                    // 3. Update saldo di database
+                    mDatabase.child("users").child(userId).child("balance").setValue(newBalance);
+
+                    // 4. Simpan data tiket
+                    saveTicketToDatabase(userId, totalHarga, dialog);
+                } else {
+                    // SALDO KURANG
+                    dialog.dismiss();
+                    Toast.makeText(PilihKursiActivity.this, "Saldo tidak cukup! Silakan Top Up di menu Profile.", Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                dialog.dismiss();
+                Toast.makeText(PilihKursiActivity.this, "Gagal mengecek saldo", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saveTicketToDatabase(String userId, int totalHarga, AlertDialog dialog) {
+        String orderId = mDatabase.child("Tickets").push().getKey();
         if (orderId == null) {
-            Toast.makeText(this, "Gagal membuat pesanan, coba lagi", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
             return;
         }
 
@@ -288,22 +313,23 @@ public class PilihKursiActivity extends AppCompatActivity implements CompoundBut
         ticketData.put("movieTitle", movie.getTitle()); 
         ticketData.put("moviePoster", movie.getPoster()); 
         ticketData.put("seats", kursiTerpilih);
-        ticketData.put("totalPrice", kursiTerpilih.size() * movie.getPrice());
+        ticketData.put("totalPrice", totalHarga);
         ticketData.put("purchaseDate", System.currentTimeMillis());
-        if (selectedTime != null) {
-            ticketData.put("showTime", selectedTime);
-        }
+        if (selectedTime != null) ticketData.put("showTime", selectedTime);
 
         mDatabase.child("Tickets").child(orderId).setValue(ticketData)
                 .addOnSuccessListener(aVoid -> {
                     dialog.dismiss();
-                    Toast.makeText(PilihKursiActivity.this, "Tiket berhasil dibeli!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PilihKursiActivity.this, "Tiket berhasil dibeli! Saldo terpotong.", Toast.LENGTH_SHORT).show();
                     
                     Intent intent = new Intent(PilihKursiActivity.this, TicketActivity.class); 
                     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                     finish();
                 })
-                .addOnFailureListener(e -> Toast.makeText(PilihKursiActivity.this, "Gagal menyimpan pesanan: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    dialog.dismiss();
+                    Toast.makeText(PilihKursiActivity.this, "Gagal menyimpan pesanan: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }
